@@ -235,8 +235,20 @@ func (c *serverConn) OnPacket(r *parser.PacketDecoder) {
 		c.pingChan <- true
 	case parser.MESSAGE:
 		closeChan := make(chan struct{})
-		c.readerChan <- newConnReader(r, closeChan)
-		<-closeChan
+		// 添加一个超时机制来检测是否有人接收 readerChan
+		select {
+		case c.readerChan <- newConnReader(r, closeChan):
+			// 添加超时等待，避免无限阻塞
+			select {
+			case <-closeChan:
+				// fmt.Printf("[MESSAGE_COMPLETED] Connection %s received signal on closeChan\n", c.id)
+			case <-time.After(30 * time.Second): // 30秒超时，可根据实际情况调整
+				fmt.Printf("[MESSAGE_TIMEOUT] Connection %s timed out waiting for closeChan signal\n", c.id)
+			}
+		case <-time.After(30 * time.Second): // 30秒超时，可根据实际情况调整
+			fmt.Printf("[MESSAGE_CHANNEL_BLOCKED] Connection %s could not send to readerChan (channel blocked)\n", c.id)
+		}
+
 		close(closeChan)
 		r.Close()
 	case parser.UPGRADE:
