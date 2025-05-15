@@ -6,10 +6,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/googollee/go-engine.io/message"
-	"github.com/googollee/go-engine.io/parser"
-	"github.com/googollee/go-engine.io/transport"
 	. "github.com/smartystreets/goconvey/convey"
+	"github.com/sunmi-OS/go-engine.io/message"
+	"github.com/sunmi-OS/go-engine.io/parser"
+	"github.com/sunmi-OS/go-engine.io/transport"
 )
 
 func TestPolling(t *testing.T) {

@@ -11,10 +11,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/googollee/go-engine.io/message"
-	"github.com/googollee/go-engine.io/parser"
-	"github.com/googollee/go-engine.io/transport"
 	. "github.com/smartystreets/goconvey/convey"
+	"github.com/sunmi-OS/go-engine.io/message"
+	"github.com/sunmi-OS/go-engine.io/parser"
+	"github.com/sunmi-OS/go-engine.io/transport"
 )
 
 func TestServer(t *testing.T) {
