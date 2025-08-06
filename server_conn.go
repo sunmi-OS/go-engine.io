@@ -248,8 +248,12 @@ func (c *serverConn) OnPacket(r *parser.PacketDecoder) {
 		case <-time.After(30 * time.Second): // 30秒超时，可根据实际情况调整
 			fmt.Printf("[MESSAGE_CHANNEL_BLOCKED] Connection %s could not send to readerChan (channel blocked)\n", c.id)
 		}
-
-		close(closeChan)
+		select {
+		case <-closeChan:
+			fmt.Println("OnPacket closeChan is already closed")
+		default:
+			close(closeChan)
+		}
 		r.Close()
 	case parser.UPGRADE:
 		c.upgraded()
@@ -272,11 +276,33 @@ func (c *serverConn) OnClose(server transport.Server) {
 		t.Close()
 		c.setUpgrading("", nil)
 	}
+	// Check if already closed to prevent double closing of channels
+	if c.getState() == stateClosed {
+		return
+	}
+
 	c.setState(stateClosed)
-	close(c.readerChan)
+
+	// Safely close readerChan
+	select {
+	case <-c.readerChan:
+		// Channel is already closed
+		fmt.Println("OnClose readerChan is already closed")
+	default:
+		close(c.readerChan)
+	}
+
+	// Safely close pingChan
 	c.pingLocker.Lock()
-	close(c.pingChan)
+	select {
+	case <-c.pingChan:
+		// Channel is already closed
+		fmt.Println("OnClose pingChan is already closed")
+	default:
+		close(c.pingChan)
+	}
 	c.pingLocker.Unlock()
+
 	c.callback.onClose(c.id)
 }
 
