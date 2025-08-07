@@ -24,15 +24,15 @@ func (r *connReader) Close() error {
 		return nil
 	}
 
-	// 使用select来安全地发送数据，避免向已关闭的channel发送
-	select {
-	case r.closeChan <- struct{}{}:
-		// 成功发送
-	case <-r.closeChan:
-		// channel已关闭，不需要发送
-	default:
-		// channel已满或已关闭，忽略
-	}
+	// // 使用select来安全地发送数据，避免向已关闭的channel发送
+	// select {
+	// case r.closeChan <- struct{}{}:
+	// 	// 成功发送
+	// case <-r.closeChan:
+	// 	// channel已关闭，不需要发送
+	// default:
+	// 	// channel已满或已关闭，忽略
+	// }
 
 	r.closeChan = nil
 	return nil
