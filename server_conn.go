@@ -242,10 +242,10 @@ func (c *serverConn) OnPacket(r *parser.PacketDecoder) {
 			select {
 			case <-closeChan:
 				// fmt.Printf("[MESSAGE_COMPLETED] Connection %s received signal on closeChan\n", c.id)
-			case <-time.After(30 * time.Second): // 30秒超时，可根据实际情况调整
+			case <-time.After(300 * time.Second): // 30秒超时，可根据实际情况调整
 				fmt.Printf("[MESSAGE_TIMEOUT] Connection %s timed out waiting for closeChan signal\n", c.id)
 			}
-		case <-time.After(30 * time.Second): // 30秒超时，可根据实际情况调整
+		case <-time.After(300 * time.Second): // 30秒超时，可根据实际情况调整
 			fmt.Printf("[MESSAGE_CHANNEL_BLOCKED] Connection %s could not send to readerChan (channel blocked)\n", c.id)
 		}
 		select {
