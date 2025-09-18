@@ -85,6 +85,7 @@ var InvalidError = errors.New("invalid transport")
 
 func newServerConn(id string, w http.ResponseWriter, r *http.Request, callback serverCallback) (*serverConn, error) {
 	transportName := r.URL.Query().Get("transport")
+	fmt.Printf("[newServerConn] newServerConn id: %s, transport: %s .\n", id, transportName)
 	creater := callback.transports().Get(transportName)
 	if creater.Name == "" {
 		return nil, InvalidError
@@ -185,6 +186,7 @@ func (c *serverConn) Close() error {
 
 func (c *serverConn) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	transportName := r.URL.Query().Get("transport")
+	fmt.Printf("[ServeHTTP] ServeHTTP id: %s, transport: %s, current: %s, state : %d .\n", c.id, transportName, c.currentName, c.getState())
 	if c.currentName != transportName {
 		creater := c.callback.transports().Get(transportName)
 		if creater.Name == "" {
