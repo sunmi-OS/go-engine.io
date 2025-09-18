@@ -136,6 +136,7 @@ func (c *serverConn) NextWriter(t MessageType) (io.WriteCloser, error) {
 	if c == nil {
 		return nil, errors.New("serverConn.NextWriter() on nil serverConn")
 	}
+	fmt.Printf("[NextWriter] NextWriter id: %s, state : %d .\n", c.id, c.getState())
 	switch c.getState() {
 	case stateUpgrading:
 		for i := 0; i < 30; i++ {
@@ -256,6 +257,7 @@ func (c *serverConn) OnPacket(r *parser.PacketDecoder) {
 		}
 		r.Close()
 	case parser.UPGRADE:
+		fmt.Printf("[UPGRADE] Connection %s received UPGRADE packet\n", c.id)
 		c.upgraded()
 	case parser.NOOP:
 	}
@@ -368,6 +370,8 @@ func (c *serverConn) setCurrent(name string, s transport.Server) {
 func (c *serverConn) setUpgrading(name string, s transport.Server) {
 	c.transportLocker.Lock()
 	defer c.transportLocker.Unlock()
+
+	fmt.Printf("[setUpgrading] Connection %s set upgrading to %s\n", c.id, name)
 
 	c.upgradingName = name
 	c.upgrading = s
