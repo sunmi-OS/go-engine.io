@@ -251,13 +251,16 @@ func (c *serverConn) OnPacket(r *parser.PacketDecoder) {
 		case <-time.After(30 * time.Second): // 30秒超时，可根据实际情况调整
 			fmt.Printf("[MESSAGE_CHANNEL_BLOCKED] Connection %s could not send to readerChan (channel blocked)\n", c.id)
 		}
+		// 先让 connReader 有机会正常发送信号
+		r.Close()
+
+		// 然后再清理 closeChan
 		select {
 		case <-closeChan:
-			fmt.Println("OnPacket closeChan is already closed")
+			// 已关闭
 		default:
 			close(closeChan)
 		}
-		r.Close()
 	case parser.UPGRADE:
 		fmt.Printf("[UPGRADE] Connection %s received UPGRADE packet\n", c.id)
 		c.upgraded()
