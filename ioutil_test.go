@@ -20,7 +20,7 @@ func TestConnIoutil(t *testing.T) {
 			decoder, err := parser.NewDecoder(r)
 			So(err, ShouldBeNil)
 
-			closeChan := make(chan struct{})
+			closeChan := make(chan struct{}, 1)
 			reader := newConnReader(decoder, closeChan)
 			b := make([]byte, 1024)
 			n, err := reader.Read(b)
@@ -40,18 +40,9 @@ func TestConnIoutil(t *testing.T) {
 				}()
 
 				time.Sleep(time.Second / 10) // wait goroutine start
-				select {
-				case <-check:
-					So("should not run here", ShouldEqual, "")
-				default:
-				}
 				<-closeChan
 				time.Sleep(time.Second / 10) // wait goroutine end
-				select {
-				case <-check:
-				default:
-					So("should not run here", ShouldEqual, "")
-				}
+				<-check
 
 				Convey("Close again", func() {
 					err := reader.Close()

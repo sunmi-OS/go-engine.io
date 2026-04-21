@@ -10,6 +10,7 @@ import (
 type connReader struct {
 	*parser.PacketDecoder
 	closeChan chan struct{}
+	notify    sync.Once
 }
 
 func newConnReader(d *parser.PacketDecoder, closeChan chan struct{}) *connReader {
@@ -20,20 +21,20 @@ func newConnReader(d *parser.PacketDecoder, closeChan chan struct{}) *connReader
 }
 
 func (r *connReader) Close() error {
-	if r.closeChan == nil {
+	if r == nil || r.closeChan == nil {
 		return nil
 	}
 
-	// 使用select来安全地发送数据，避免向已关闭的channel发送
-	select {
-	case r.closeChan <- struct{}{}:
-		// 成功发送
-	case <-r.closeChan:
-		// channel已关闭，不需要发送
-	default:
-		// channel已满或已关闭，忽略
-	}
-
+	// 只通知一次。closeChan 必须由创建方使用带缓冲 channel 且不得 close，
+	// 否则在 OnPacket 超时与 socket 侧 decoder.Close 竞态下会出现 send on closed channel。
+	ch := r.closeChan
+	r.notify.Do(func() {
+		select {
+		case ch <- struct{}{}:
+		default:
+			// 带缓冲(1)且已有信号：忽略
+		}
+	})
 	r.closeChan = nil
 	return nil
 }

@@ -237,7 +237,9 @@ func (c *serverConn) OnPacket(r *parser.PacketDecoder) {
 		}
 		c.pingChan <- true
 	case parser.MESSAGE:
-		closeChan := make(chan struct{})
+		// 缓冲 1：OnPacket 等待超时后 socket 仍可能 defer decoder.Close → connReader.Close，
+		// 若对无缓冲 channel 发送会永久阻塞；若先 close(closeChan) 则晚到的发送会 panic。
+		closeChan := make(chan struct{}, 1)
 		// 添加一个超时机制来检测是否有人接收 readerChan
 		select {
 		case c.readerChan <- newConnReader(r, closeChan):
@@ -253,14 +255,7 @@ func (c *serverConn) OnPacket(r *parser.PacketDecoder) {
 		}
 		// 先让 connReader 有机会正常发送信号
 		r.Close()
-
-		// 然后再清理 closeChan
-		select {
-		case <-closeChan:
-			// 已关闭
-		default:
-			close(closeChan)
-		}
+		// 不要 close(closeChan)：socket 侧可能晚于本函数结束才 Close，close 会导致 send on closed channel。
 	case parser.UPGRADE:
 		fmt.Printf("[UPGRADE] Connection %s received UPGRADE packet\n", c.id)
 		c.upgraded()
