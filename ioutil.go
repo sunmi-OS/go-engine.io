@@ -35,7 +35,6 @@ func (r *connReader) Close() error {
 			// 带缓冲(1)且已有信号：忽略
 		}
 	})
-	r.closeChan = nil
 	return nil
 }
 
